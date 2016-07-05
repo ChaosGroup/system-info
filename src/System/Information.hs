@@ -15,7 +15,7 @@ module System.Information
     OS(..), os
   -- * CPU
   , CPUName, CPUNames, cpuNames
-  , numCPUs, CPU, CPUs
+  , numCPUs, Count, CPU, CPUs
   , cpus, showCPUs
   ) where
 
@@ -59,6 +59,7 @@ newtype CPUName = CPUName String
 
 type CPUNames = [CPUName]
 
+-- | Number of CPUs having the same name
 type Count = Int
 type CPU   = (CPUName, Count)
 type CPUs  = [CPU]
