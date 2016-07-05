@@ -2,7 +2,12 @@
 module System.Information
   ( OS(..), os
   , CPUName, CPUNames, cpuNames
+  , CPU, CPUs
+  , cpus, showCPUs
   ) where
+
+import Control.Applicative (liftA2)
+import Data.List (group, sort)
 
 #ifdef linux_HOST_OS
 import Data.List (isPrefixOf)
@@ -24,6 +29,10 @@ newtype CPUName = CPUName String
   deriving (Eq, Ord, Show)
 
 type CPUNames = [CPUName]
+
+type Count = Int
+type CPU   = (CPUName, Count)
+type CPUs  = [CPU]
 
 
 os :: OS
@@ -68,3 +77,9 @@ windowsCPUNames = do
   pure $ map (CPUName . unwords . words) res
 
 #endif
+
+cpus :: IO CPUs
+cpus = map (liftA2 (,) head length) . group . sort <$> cpuNames
+
+showCPUs :: CPUs -> String
+showCPUs = concatMap (\(CPUName c, n) -> concat [c, " x", show n])
