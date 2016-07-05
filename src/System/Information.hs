@@ -1,6 +1,20 @@
 {-# Language CPP #-}
+{-|
+Module      : System.Information
+Description : Getting system information
+Copyright   : 2016 ChaosGroup
+License     : MIT
+Maintainer  : daniel.taskoff@chaosgroup.com
+Stability   : experimental
+Portability : non-portable (GHC extensions)
+-}
+
 module System.Information
+  -- * OS functions
+  -- $os
   ( OS(..), os
+  -- * CPU functions
+  -- $cpu
   , CPUName, CPUNames, cpuNames
   , numCPUs, CPU, CPUs
   , cpus, showCPUs
@@ -22,19 +36,13 @@ import System.Win32.Registry
 #endif
 
 
+-- $os
+-- | A datatype representing the different OSes
+-- Note: Currenty, only Linux and Windows OSes are recognised
 data OS = Linux | Windows | Other
   deriving (Eq, Show)
 
-newtype CPUName = CPUName String
-  deriving (Eq, Ord, Show)
-
-type CPUNames = [CPUName]
-
-type Count = Int
-type CPU   = (CPUName, Count)
-type CPUs  = [CPU]
-
-
+-- | Get the current OS
 os :: OS
 os =
 #ifdef linux_HOST_OS
@@ -45,6 +53,20 @@ os =
   Other
 #endif
 
+
+-- | A wrapper for a CPU's name
+newtype CPUName = CPUName String
+  deriving (Eq, Ord, Show)
+
+type CPUNames = [CPUName]
+
+type Count = Int
+type CPU   = (CPUName, Count)
+type CPUs  = [CPU]
+
+
+-- $cpu
+-- | Get the names of the available CPUs
 cpuNames :: IO CPUNames
 cpuNames =
 #ifdef linux_HOST_OS
@@ -56,6 +78,7 @@ cpuNames =
 #endif
 
 #ifdef linux_HOST_OS
+-- | Linux specific implementation
 linuxCPUNames :: IO CPUNames
 linuxCPUNames = do
   lines' <- lines <$> readFile "/proc/cpuinfo"
@@ -63,6 +86,7 @@ linuxCPUNames = do
     filter ("model name" `isPrefixOf`) lines'
 
 #elif mingw32_HOST_OS
+-- | Windows specific implementation
 windowsCPUNames :: IO CPUNames
 windowsCPUNames = do
   cpus <- regOpenKey hKEY_LOCAL_MACHINE "Hardware\\Description\\System\\CentralProcessor"
@@ -78,11 +102,14 @@ windowsCPUNames = do
 
 #endif
 
+-- | Get the number of available CPUs
 numCPUs :: IO Int
 numCPUs = length <$> cpuNames
 
+-- | Get the names and counts of the available CPUs
 cpus :: IO CPUs
 cpus = map (liftA2 (,) head length) . group . sort <$> cpuNames
 
+-- | Pretty show 'CPUs'
 showCPUs :: CPUs -> String
 showCPUs = concatMap (\(CPUName c, n) -> concat [c, " x", show n])
