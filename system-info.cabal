@@ -1,6 +1,6 @@
 name:                system-info
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Get information about CPUs, memory, etc.
 description:         An OS independent Haskell library for getting information about CPUs, memory, etc.
 homepage:            https://github.com/ChaosGroup/system-info
 license:             MIT
@@ -31,4 +31,4 @@ test-suite system-info-test
 
 source-repository head
   type:     git
-  location: https://github.com/ChaosGroup/system-info
+  location: git://github.com/ChaosGroup/system-info.git
