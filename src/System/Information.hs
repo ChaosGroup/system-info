@@ -2,7 +2,7 @@
 module System.Information
   ( OS(..), os
   , CPUName, CPUNames, cpuNames
-  , CPU, CPUs
+  , numCPUs, CPU, CPUs
   , cpus, showCPUs
   ) where
 
@@ -77,6 +77,9 @@ windowsCPUNames = do
   pure $ map (CPUName . unwords . words) res
 
 #endif
+
+numCPUs :: IO Int
+numCPUs = length <$> cpuNames
 
 cpus :: IO CPUs
 cpus = map (liftA2 (,) head length) . group . sort <$> cpuNames
