@@ -10,11 +10,10 @@ Portability : non-portable (GHC extensions)
 -}
 
 module System.Information
-  -- * OS functions
-  -- $os
-  ( OS(..), os
-  -- * CPU functions
-  -- $cpu
+  (
+  -- * OS
+    OS(..), os
+  -- * CPU
   , CPUName, CPUNames, cpuNames
   , numCPUs, CPU, CPUs
   , cpus, showCPUs
@@ -36,9 +35,9 @@ import System.Win32.Registry
 #endif
 
 
--- $os
 -- | A datatype representing the different OSes
--- Note: Currenty, only Linux and Windows OSes are recognised
+--
+-- Currenty, only Linux and Windows OSes are recognised
 data OS = Linux | Windows | Other
   deriving (Eq, Show)
 
@@ -65,7 +64,6 @@ type CPU   = (CPUName, Count)
 type CPUs  = [CPU]
 
 
--- $cpu
 -- | Get the names of the available CPUs
 cpuNames :: IO CPUNames
 cpuNames =
