@@ -1,5 +1,5 @@
 name:                system-info
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Get information about CPUs, memory, etc.
 description:         An OS independent Haskell library for getting information about CPUs, memory, etc.
 homepage:            https://github.com/ChaosGroup/system-info
@@ -16,7 +16,11 @@ cabal-version:       >=1.18
 library
   hs-source-dirs:      src
   exposed-modules:     System.Information
-  build-depends:       base >= 4.8 && < 5.0
+  if os(linux)
+    build-depends:     base >= 4.8 && < 5.0
+  if os(windows)
+    build-depends:     base >= 4.8 && < 5.0
+                     , Win32 >= 2.3 && < 2.4
   default-language:    Haskell2010
   ghc-options:         -fwarn-incomplete-uni-patterns
 
