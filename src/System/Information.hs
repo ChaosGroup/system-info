@@ -55,7 +55,10 @@ os =
 
 -- | A wrapper for a CPU's name
 newtype CPUName = CPUName String
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
+
+instance Show CPUName where
+  show (CPUName name) = name
 
 type CPUNames = [CPUName]
 
