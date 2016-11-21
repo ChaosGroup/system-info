@@ -63,7 +63,7 @@ instance Show CPUName where
 type CPUNames = [CPUName]
 
 -- | Number of CPUs having the same name
-type Count = Int
+type Count = Word
 type CPU   = (CPUName, Count)
 type CPUs  = [CPU]
 
@@ -105,12 +105,12 @@ windowsCPUNames = do
 #endif
 
 -- | Get the number of available CPUs
-numCPUs :: IO Int
-numCPUs = length <$> cpuNames
+numCPUs :: IO Word
+numCPUs = fromIntegral . length <$> cpuNames
 
 -- | Get the names and counts of the available CPUs
 cpus :: IO CPUs
-cpus = map (liftA2 (,) head length) . group . sort <$> cpuNames
+cpus = map (liftA2 (,) head (fromIntegral . length)) . group . sort <$> cpuNames
 
 -- | Pretty show 'CPUs'
 showCPUs :: CPUs -> String
