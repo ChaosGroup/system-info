@@ -16,7 +16,7 @@ cabal-version:       >=1.18
 library
   hs-source-dirs:      src
   exposed-modules:     System.Information
-  if os(linux)
+  if os(linux) || os(freebsd)
     build-depends:     base >= 4.8 && < 5.0
   if os(windows)
     build-depends:     base >= 4.8 && < 5.0
