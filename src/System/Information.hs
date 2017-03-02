@@ -15,7 +15,7 @@ module System.Information
     OS(..), os
   -- * CPU
   , CPUName, CPUNames, cpuNames
-  , numCPUs, Count, CPU, CPUs
+  , numLogicalCores, LogicalCores(unLogicalCores), CPU, CPUs
   , cpus, showCPUs
   ) where
 
@@ -62,9 +62,10 @@ instance Show CPUName where
 
 type CPUNames = [CPUName]
 
--- | Number of CPUs having the same name
-type Count = Word
-type CPU   = (CPUName, Count)
+-- | Number of logical cores
+newtype LogicalCores = LogicalCores { unLogicalCores :: Word }
+  deriving (Show)
+type CPU   = (CPUName, LogicalCores)
 type CPUs  = [CPU]
 
 
@@ -104,14 +105,15 @@ windowsCPUNames = do
 
 #endif
 
--- | Get the number of available CPUs
-numCPUs :: IO Word
-numCPUs = fromIntegral . length <$> cpuNames
+-- | Get the number of logical CPU cores
+numLogicalCores :: IO LogicalCores
+numLogicalCores = LogicalCores . fromIntegral . length <$> cpuNames
 
--- | Get the names and counts of the available CPUs
+-- | Get the names and number of logical cores of the available CPUs
 cpus :: IO CPUs
-cpus = map (liftA2 (,) head (fromIntegral . length)) . group . sort <$> cpuNames
+cpus = map (liftA2 (,) head (LogicalCores . fromIntegral . length)) . group . sort <$> cpuNames
 
 -- | Pretty show 'CPUs'
 showCPUs :: CPUs -> String
-showCPUs = concatMap (\(CPUName c, n) -> concat [c, " x", show n])
+showCPUs = concatMap (\(CPUName c, n) -> concat
+  [c, ", # of logical cores: ", show $ unLogicalCores n])
