@@ -115,5 +115,5 @@ cpus = map (liftA2 (,) head (LogicalCores . fromIntegral . length)) . group . so
 
 -- | Pretty show 'CPUs'
 showCPUs :: CPUs -> String
-showCPUs = concatMap (\(CPUName c, n) -> concat
+showCPUs = unlines . map (\(CPUName c, n) -> concat
   [c, ", # of logical cores: ", show $ unLogicalCores n])
