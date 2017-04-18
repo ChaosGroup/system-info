@@ -16,11 +16,13 @@ cabal-version:       >=1.18
 library
   hs-source-dirs:      src
   exposed-modules:     System.Information
-  if os(linux) || os(freebsd)
-    build-depends:     base >= 4.8 && < 5.0
+  build-depends:       base >= 4.9 && < 5.0
+                     , process >= 1.4 && < 1.5
+                     , pcre-light >= 0.4 && < 0.5
+
   if os(windows)
-    build-depends:     base >= 4.8 && < 5.0
-                     , Win32 >= 2.3 && < 2.4
+    build-depends:     Win32 >= 2.3 && < 2.4
+
   default-language:    Haskell2010
   ghc-options:         -fwarn-incomplete-uni-patterns
 

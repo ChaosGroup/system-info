@@ -1,4 +1,4 @@
-{-# Language CPP #-}
+{-# Language CPP, OverloadedStrings, ScopedTypeVariables #-}
 {-|
 Module      : System.Information
 Description : Getting system information
@@ -12,7 +12,7 @@ Portability : non-portable (GHC extensions)
 module System.Information
   (
   -- * OS
-    OS(..), os
+    OS(..), getOS
   -- * CPU
   , CPUName, CPUNames, cpuNames
   , numLogicalCores, LogicalCores(unLogicalCores), CPU, CPUs
@@ -20,13 +20,17 @@ module System.Information
   ) where
 
 import Control.Applicative (liftA2)
+import Control.Exception (try, SomeException)
 import Data.List (group, sort)
+import System.Process (readProcess)
+import Text.Regex.PCRE.Light.Char8 (compile, match)
 
 #ifdef linux_HOST_OS
 import Data.List (isPrefixOf)
 
 #elif mingw32_HOST_OS
 import Control.Monad (forM)
+import Data.List (intercalate)
 import System.Win32.Registry
   ( hKEY_LOCAL_MACHINE
   , regOpenKey, regCloseKey, regQueryInfoKey, regQueryValue
@@ -38,19 +42,39 @@ import System.Win32.Registry
 -- | A datatype representing the different OSes
 --
 -- Currenty, only Linux and Windows OSes are recognised
-data OS = Linux | Windows | Other
-  deriving (Eq, Show)
+newtype OS = OS String deriving Show
 
--- | Get the current OS
-os :: OS
-os =
+-- | Get the current OS' name
+getOS :: IO (Maybe OS)
+getOS = do
+  eResult <- try $ readProcess
 #ifdef linux_HOST_OS
-  Linux
+    "lsb_release" ["-d"] ""
 #elif mingw32_HOST_OS
-  Windows
+    "systeminfo" [] ""
 #else
-  Other
+    undefined
 #endif
+  pure $ case eResult of
+    Left (_ :: SomeException) -> Nothing
+    Right res ->
+      let nameRegex = flip compile []
+#ifdef linux_HOST_OS
+            "Description:\\s+(.+)"
+#elif mingw32_HOST_OS
+            "OS Name:\\s+(.+)\n.*OS Version:\\s+(.+)"
+#else
+            ""
+#endif
+      in OS .
+#ifdef linux_HOST_OS
+            last
+#elif mingw32_HOST_OS
+            intercalate "\n" . drop 2
+#else
+            id
+#endif
+            <$> match nameRegex res []
 
 
 -- | A wrapper for a CPU's name
