@@ -63,7 +63,7 @@ getOS = do
 #ifdef linux_HOST_OS
         "Description:\\s+(.+)"
 #elif mingw32_HOST_OS
-        "OS Name:\\s+(.+)\n.*OS Version:\\s+(.+)"
+        "OS Name:\\s+(.+)"
 #else
         ""
 #endif
