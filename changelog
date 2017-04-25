@@ -1,0 +1,3 @@
+0.1.0.6
+	* get a more concrete OS name (e.g. Arch Linux and Windows 7 Professional
+	instead of just Linux and Window)

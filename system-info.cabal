@@ -10,7 +10,7 @@ maintainer:          daniel.taskoff@chaosgroup.com
 copyright:           2016 ChaosGroup
 category:            System
 build-type:          Simple
--- extra-source-files:
+extra-source-files:  changelog
 cabal-version:       >=1.18
 
 library
