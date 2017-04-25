@@ -23,7 +23,8 @@ import Control.Applicative (liftA2)
 import Control.Exception (try, SomeException)
 import Data.List (group, sort)
 import System.Process (readProcess)
-import Text.Regex.PCRE.Light.Char8 (compile, match)
+import Text.RE.PCRE
+  ( compileRegex, defaultOptions, captureTextMaybe, CaptureID (IsCaptureOrdinal), (?=~) )
 
 #ifdef linux_HOST_OS
 import Data.List (isPrefixOf)
@@ -57,24 +58,16 @@ getOS = do
 #endif
   pure $ case eResult of
     Left (_ :: SomeException) -> Nothing
-    Right res ->
-      let nameRegex = flip compile []
+    Right res -> do
+      nameRegex <- compileRegex defaultOptions
 #ifdef linux_HOST_OS
-            "Description:\\s+(.+)"
+        "Description:\\s+(.+)"
 #elif mingw32_HOST_OS
-            "OS Name:\\s+(.+)\n.*OS Version:\\s+(.+)"
+        "OS Name:\\s+(.+)\n.*OS Version:\\s+(.+)"
 #else
-            ""
+        ""
 #endif
-      in OS .
-#ifdef linux_HOST_OS
-            last
-#elif mingw32_HOST_OS
-            intercalate "\n" . drop 2
-#else
-            id
-#endif
-            <$> match nameRegex res []
+      OS <$> captureTextMaybe (IsCaptureOrdinal 1) (res ?=~ nameRegex)
 
 
 -- | A wrapper for a CPU's name
