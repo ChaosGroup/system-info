@@ -12,7 +12,7 @@ Portability : non-portable (GHC extensions)
 module System.Information
   (
   -- * OS
-    OS(..), getOS
+    OS, getOS
   -- * CPU
   , CPUName, CPUNames, cpuNames
   , numLogicalCores, LogicalCores(unLogicalCores), CPU, CPUs
@@ -43,7 +43,10 @@ import System.Win32.Registry
 -- | A datatype representing the different OSes
 --
 -- Currenty, only Linux and Windows OSes are recognised
-newtype OS = OS String deriving Show
+newtype OS = OS String
+
+instance Show OS where
+  show (OS os) = os
 
 -- | Get the current OS' name
 getOS :: IO (Maybe OS)
