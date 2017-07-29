@@ -23,8 +23,8 @@ import Control.Applicative (liftA2)
 import Control.Exception (try, SomeException)
 import Data.List (group, sort)
 import System.Process (readProcess)
-import Text.RE.PCRE
-  ( compileRegex, defaultOptions, captureTextMaybe, CaptureID (IsCaptureOrdinal), (?=~) )
+import Text.RE.PCRE (compileRegex, (?=~))
+import Text.RE.Replace (captureTextMaybe, CaptureID (IsCaptureOrdinal))
 
 #ifdef linux_HOST_OS
 import Data.List (isPrefixOf)
@@ -62,7 +62,7 @@ getOS = do
   pure $ case eResult of
     Left (_ :: SomeException) -> Nothing
     Right res -> do
-      nameRegex <- compileRegex defaultOptions
+      nameRegex <- compileRegex
 #ifdef linux_HOST_OS
         "Description:\\s+(.+)"
 #elif mingw32_HOST_OS
