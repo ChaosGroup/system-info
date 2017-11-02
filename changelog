@@ -1,3 +1,6 @@
+0.1.0.9
+	* get OS name and cpu information on macOS
+	* build system-info with lts-9.11
 0.1.0.8
 	* build system-info with lts-9.0
 0.1.0.7
@@ -5,4 +8,4 @@
 	* relax build-depends constraints
 0.1.0.6
 	* get a more concrete OS name (e.g. Arch Linux and Windows 7 Professional
-	instead of just Linux and Window)
+	instead of just Linux and Windows)
