@@ -26,7 +26,12 @@ import System.Process (readProcess)
 import Text.RE.PCRE (compileRegex, (?=~))
 import Text.RE.Replace (captureTextMaybe, CaptureID (IsCaptureOrdinal))
 
-#ifdef linux_HOST_OS
+#ifdef darwin_HOST_OS
+import Data.Either (either)
+import Data.List (isPrefixOf)
+import Text.Read (readMaybe)
+
+#elif linux_HOST_OS
 import Data.List (isPrefixOf)
 
 #elif mingw32_HOST_OS
@@ -40,9 +45,7 @@ import System.Win32.Registry
 #endif
 
 
--- | A datatype representing the different OSes
---
--- Currenty, only Linux and Windows OSes are recognised
+-- | A datatype representing different OSes
 newtype OS = OS String
 
 instance Show OS where
@@ -52,24 +55,26 @@ instance Show OS where
 getOS :: IO (Maybe OS)
 getOS = do
   eResult <- try $ readProcess
-#ifdef linux_HOST_OS
+#ifdef darwin_HOST_OS
+    "sw_vers" [] ""
+#elif linux_HOST_OS
     "lsb_release" ["-d"] ""
 #elif mingw32_HOST_OS
     "systeminfo" [] ""
-#else
-    undefined
 #endif
+
   pure $ case eResult of
     Left (_ :: SomeException) -> Nothing
     Right res -> do
       nameRegex <- compileRegex
-#ifdef linux_HOST_OS
+#ifdef darwin_HOST_OS
+        "ProductName:\\s+(.+)"
+#elif linux_HOST_OS
         "Description:\\s+(.+)"
 #elif mingw32_HOST_OS
         "OS Name:\\s+(.+)"
-#else
-        ""
 #endif
+
       OS <$> captureTextMaybe (IsCaptureOrdinal 1) (res ?=~ nameRegex)
 
 
@@ -92,15 +97,34 @@ type CPUs  = [CPU]
 -- | Get the names of the available CPUs
 cpuNames :: IO CPUNames
 cpuNames =
-#ifdef linux_HOST_OS
+#ifdef darwin_HOST_OS
+  macOSCPUNames
+#elif linux_HOST_OS
   linuxCPUNames
 #elif mingw32_HOST_OS
   windowsCPUNames
-#else
-  pure []
 #endif
 
-#ifdef linux_HOST_OS
+#ifdef darwin_HOST_OS
+-- | macOS specific implementation
+macOSCPUNames :: IO CPUNames
+macOSCPUNames = do
+  eCPU <- try $ readProcess "sysctl" ["machdep.cpu.brand_string", "machdep.cpu.thread_count"] ""
+
+  case eCPU of
+    Left (_ :: SomeException) -> pure []
+    Right cpus -> do
+      cpuRegex <- compileRegex "machdep.cpu.brand_string:\\s+(.+)"
+      nRegex   <- compileRegex "machdep.cpu.thread_count:\\s+(.+)"
+
+      let mCPU = CPUName <$> captureTextMaybe (IsCaptureOrdinal 1) (cpus ?=~ cpuRegex)
+          mN   = readMaybe =<< captureTextMaybe (IsCaptureOrdinal 1) (cpus ?=~ nRegex)
+
+      case (mCPU, mN) of
+        (Just cpu, Just n) -> pure $ replicate n cpu
+        _ -> pure []
+
+#elif linux_HOST_OS
 -- | Linux specific implementation
 linuxCPUNames :: IO CPUNames
 linuxCPUNames = do
@@ -122,7 +146,6 @@ windowsCPUNames = do
 
   regCloseKey cpus
   pure $ map (CPUName . unwords . words) res
-
 #endif
 
 -- | Get the number of logical CPU cores
