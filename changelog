@@ -1,3 +1,5 @@
+0.1.0.10
+	* use attoparsec instead of regexes for matching strings
 0.1.0.9
 	* get OS name and cpu information on macOS
 	* build system-info with lts-9.11

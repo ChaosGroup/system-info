@@ -19,12 +19,12 @@ module System.Information
   , cpus, showCPUs
   ) where
 
-import Control.Applicative (liftA2)
+import Control.Applicative
 import Control.Exception (try, SomeException)
 import Data.List (group, sort)
 import System.Process (readProcess)
-import Text.RE.PCRE (compileRegex, (?=~))
-import Text.RE.Replace (captureTextMaybe, CaptureID (IsCaptureOrdinal))
+import Data.Attoparsec.Text (parse, maybeResult, anyChar, endOfLine, manyTill, space, string)
+import Data.Text (Text, pack)
 
 #ifdef darwin_HOST_OS
 import Data.Either (either)
@@ -65,17 +65,19 @@ getOS = do
 
   pure $ case eResult of
     Left (_ :: SomeException) -> Nothing
-    Right res -> do
-      nameRegex <- compileRegex
+    Right res -> OS <$> flip parseLineAfter res
 #ifdef darwin_HOST_OS
-        "ProductName:\\s+(.+)"
+      "ProductName:"
 #elif linux_HOST_OS
-        "Description:\\s+(.+)"
+      "Description:"
 #elif mingw32_HOST_OS
-        "OS Name:\\s+(.+)"
+      "OS Name:"
 #endif
 
-      OS <$> captureTextMaybe (IsCaptureOrdinal 1) (res ?=~ nameRegex)
+parseLineAfter :: String -> String -> Maybe String
+parseLineAfter separator = maybeResult .
+  parse (manyTill anyChar (string (pack separator))  *> many space *> manyTill anyChar endOfLine) . pack
+-- ^ skip everything before `separator` and return what is left until the end of the line
 
 
 -- | A wrapper for a CPU's name
@@ -114,11 +116,11 @@ macOSCPUNames = do
   case eCPU of
     Left (_ :: SomeException) -> pure []
     Right cpus -> do
-      cpuRegex <- compileRegex "machdep.cpu.brand_string:\\s+(.+)"
-      nRegex   <- compileRegex "machdep.cpu.thread_count:\\s+(.+)"
+      let cpuString = "machdep.cpu.brand_string:"
+          nString   = "machdep.cpu.thread_count:"
 
-      let mCPU = CPUName <$> captureTextMaybe (IsCaptureOrdinal 1) (cpus ?=~ cpuRegex)
-          mN   = readMaybe =<< captureTextMaybe (IsCaptureOrdinal 1) (cpus ?=~ nRegex)
+      let mCPU = CPUName <$> parseLineAfter cpuString cpus
+          mN   = readMaybe =<< parseLineAfter nString cpus
 
       case (mCPU, mN) of
         (Just cpu, Just n) -> pure $ replicate n cpu
