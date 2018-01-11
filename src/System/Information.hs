@@ -63,9 +63,17 @@ getOS = do
     "systeminfo" [] ""
 #endif
 
-  pure $ case eResult of
-    Left (_ :: SomeException) -> Nothing
-    Right res -> OS <$> flip parseLineAfter res
+  case eResult of
+    Left (_ :: SomeException) -> either (const Nothing :: SomeException -> Maybe OS)
+                                        (Just . OS) <$> try (readProcess
+#ifndef mingw32_HOST_OS
+      "uname" ["-sr"] ""
+#else
+      ""
+#endif
+      )
+
+    Right res -> pure $ OS <$> flip parseLineAfter res
 #ifdef darwin_HOST_OS
       "ProductName:"
 #elif linux_HOST_OS
