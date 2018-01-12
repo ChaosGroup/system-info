@@ -64,15 +64,9 @@ getOS = do
 #endif
 
   case eResult of
-    Left (_ :: SomeException) -> either (const Nothing :: SomeException -> Maybe OS)
-                                        (Just . OS) <$> try (readProcess
-#ifndef mingw32_HOST_OS
-      "uname" ["-sr"] ""
-#else
-      "" [] ""
-#endif
-      )
-
+    Left (_ :: SomeException) ->
+      either (const Nothing :: SomeException -> Maybe OS)
+             (Just . OS) <$> try (readProcess "tr" ["-d", "\\n"] =<< readProcess "uname" ["-sr"] "")
     Right res -> pure $ OS <$> flip parseLineAfter res
 #ifdef darwin_HOST_OS
       "ProductName:"

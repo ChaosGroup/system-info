@@ -1,3 +1,5 @@
+0.1.0.13
+	* remove trailing newlines from OS' names
 0.1.0.12
 	* fix the library to build on Windows
 0.1.0.11
