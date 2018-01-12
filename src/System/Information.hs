@@ -69,7 +69,7 @@ getOS = do
 #ifndef mingw32_HOST_OS
       "uname" ["-sr"] ""
 #else
-      ""
+      "" [] ""
 #endif
       )
 
