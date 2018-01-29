@@ -37,10 +37,16 @@ import Data.List (isPrefixOf)
 #elif mingw32_HOST_OS
 import Control.Monad (forM)
 import Data.List (intercalate)
+import Foreign.C.Types (CInt(..))
+import Foreign.C.String (CWString, peekCWString)
+import Foreign.Marshal.Alloc (alloca)
+import Foreign.Ptr (Ptr)
+import Foreign.Storable (peek)
 import System.Win32.Registry
   ( hKEY_LOCAL_MACHINE
   , regOpenKey, regCloseKey, regQueryInfoKey, regQueryValue
-  , subkeys)
+  , subkeys
+  )
 
 #endif
 
@@ -54,26 +60,39 @@ instance Show OS where
 -- | Get the current OS' name
 getOS :: IO (Maybe OS)
 getOS = do
-  eResult <- try $ readProcess
+  eResult <- try $
 #ifdef darwin_HOST_OS
-    "sw_vers" [] ""
+    readProcess "sw_vers" [] ""
 #elif linux_HOST_OS
-    "lsb_release" ["-d"] ""
+    readProcess "lsb_release" ["-d"] ""
 #elif mingw32_HOST_OS
-    "systeminfo" [] ""
+    getWindowsOS
 #endif
 
   case eResult of
     Left (_ :: SomeException) ->
       either (const Nothing :: SomeException -> Maybe OS)
              (Just . OS) <$> try (readProcess "tr" ["-d", "\\n"] =<< readProcess "uname" ["-sr"] "")
-    Right res -> pure $ OS <$> flip parseLineAfter res
+    Right res -> pure $ OS <$>
 #ifdef darwin_HOST_OS
-      "ProductName:"
+      flip parseLineAfter res "ProductName:"
 #elif linux_HOST_OS
-      "Description:"
+      flip parseLineAfter res "Description:"
 #elif mingw32_HOST_OS
-      "OS Name:"
+      Just res
+#endif
+
+#ifdef mingw32_HOST_OS
+getWindowsOS :: IO String
+getWindowsOS = alloca $ \hres -> do
+  os_str <- c_getOS hres
+  res <- peek hres :: IO CInt
+  if res == 0
+  then peekCWString os_str
+  else fail ("getOS failed: " ++ show res)
+
+foreign import ccall safe "getOS"
+  c_getOS :: Ptr CInt -> IO CWString
 #endif
 
 parseLineAfter :: String -> String -> Maybe String
