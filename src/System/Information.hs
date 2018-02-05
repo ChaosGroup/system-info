@@ -21,10 +21,12 @@ module System.Information
 
 import Control.Applicative
 import Control.Exception (try, SomeException)
-import Data.List (group, sort)
-import System.Process (readProcess)
 import Data.Attoparsec.Text (parse, maybeResult, anyChar, endOfLine, manyTill, space, string)
+import Data.List (group, sort)
+import Data.Maybe (fromJust)
 import Data.Text (Text, pack)
+import System.IO.Unsafe (unsafePerformIO)
+import System.Process (readProcess)
 
 #ifdef darwin_HOST_OS
 import Data.Either (either)
@@ -58,41 +60,34 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-getOS :: IO (Maybe OS)
-getOS = do
-  eResult <- try $
+getOS :: OS
+getOS = OS $
 #ifdef darwin_HOST_OS
-    readProcess "sw_vers" [] ""
+  getMacOSVersion
 #elif linux_HOST_OS
-    readProcess "lsb_release" ["-d"] ""
+  getLinuxVersion
 #elif mingw32_HOST_OS
-    getWindowsOS
+  getWindowsVersion
 #endif
 
-  case eResult of
-    Left (_ :: SomeException) ->
-      either (const Nothing :: SomeException -> Maybe OS)
-             (Just . OS) <$> try (readProcess "tr" ["-d", "\\n"] =<< readProcess "uname" ["-sr"] "")
-    Right res -> pure $ OS <$>
 #ifdef darwin_HOST_OS
-      flip parseLineAfter res "ProductName:"
+getMacOSVersion :: String
+getMacOSVersion =
+  let res = unsafePerformIO $ readProcess "sw_vers" [] ""
+  in  fromJust $ flip parseLineAfter res "ProductName:"
 #elif linux_HOST_OS
-      flip parseLineAfter res "Description:"
+getLinuxVersion :: String
+getLinuxVersion =
+  let res = unsafePerformIO $ readProcess "lsb_release" ["-d"] ""
+  in  fromJust $ flip parseLineAfter res "Description:"
 #elif mingw32_HOST_OS
-      Just res
-#endif
-
-#ifdef mingw32_HOST_OS
-getWindowsOS :: IO String
-getWindowsOS = alloca $ \hres -> do
-  os_str <- c_getOS hres
-  res <- peek hres :: IO CInt
-  if res == 0
-  then peekCWString os_str
-  else fail ("getOS failed: " ++ show res)
+getWindowsVersion :: String
+getWindowsVersion = unsafePerformIO $ alloca $ \hres ->
+  let os_str = c_getOS hres
+  in  peekCWString os_str
 
 foreign import ccall safe "getOS"
-  c_getOS :: Ptr CInt -> IO CWString
+  c_getOS :: Ptr CInt -> CWString
 #endif
 
 parseLineAfter :: String -> String -> Maybe String
