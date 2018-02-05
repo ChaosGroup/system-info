@@ -2,6 +2,8 @@
 #include <Wbemidl.h>
 #include <stdbool.h>
 
+#define OS_VERSION_MAX_SIZE 128
+
 
 HRESULT init() {
   HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -87,7 +89,7 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* v
     hres = pclassObject->lpVtbl->Get(pclassObject, field, 0, &vProperty, 0, 0);
 
     if (!FAILED(hres)) {
-      value = vProperty.bstrVal;
+      wcsncpy(value, vProperty.bstrVal, OS_VERSION_MAX_SIZE - 1);
       VariantClear(&vProperty);
     }
     pclassObject->lpVtbl->Release(pclassObject);
@@ -96,18 +98,18 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* v
   return hres;
 }
 
-HRESULT getOS(wchar_t* os) {
+wchar_t* getOS() {
   HRESULT hres = init();
   if (FAILED(hres)) {
     CoUninitialize();
-    return hres;
+    return NULL;
   }
 
   IWbemLocator* plocator = NULL;
   hres = createInstance(plocator);
   if (FAILED(hres)) {
     CoUninitialize();
-    return hres;
+    return NULL;
   }
 
   IWbemServices* pservices = NULL;
@@ -116,7 +118,7 @@ HRESULT getOS(wchar_t* os) {
     pservices->lpVtbl->Release(pservices);
     plocator->lpVtbl->Release(plocator);
     CoUninitialize();
-    return hres;
+    return NULL;
   }
 
   IEnumWbemClassObject* penumerator = NULL;
@@ -126,15 +128,20 @@ HRESULT getOS(wchar_t* os) {
     pservices->lpVtbl->Release(pservices);
     plocator->lpVtbl->Release(plocator);
     CoUninitialize();
-    return hres;
+    return NULL;
   }
 
+  wchar_t* os = malloc(sizeof(os) * OS_VERSION_MAX_SIZE);
   hres = getStringField(penumerator, SysAllocString(L"Caption"), os);
+  if (FAILED(hres)) {
+    free(res);
+    res = NULL;
+  }
 
   penumerator->lpVtbl->Release(penumerator);
   pservices->lpVtbl->Release(pservices);
   plocator->lpVtbl->Release(plocator);
   CoUninitialize();
 
-  return hres;
+  return os;
 }

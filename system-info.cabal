@@ -25,6 +25,8 @@ library
     build-depends:     Win32
     c-sources:         csrc/wmi.c
     extra-libraries:   ole32, oleaut32, wbemuuid
+  else
+    c-sources:         csrc/uname.c
 
   default-language:    Haskell2010
   ghc-options:         -fwarn-incomplete-uni-patterns

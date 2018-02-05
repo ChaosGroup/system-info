@@ -25,11 +25,14 @@ import Data.Attoparsec.Text (parse, maybeResult, anyChar, endOfLine, manyTill, s
 import Data.List (group, sort)
 import Data.Maybe (fromJust)
 import Data.Text (Text, pack)
+import Foreign.C.String (CWString, peekCWString)
+import Foreign.Marshal.Alloc (free)
+import Foreign.Ptr (Ptr)
+import Foreign.Storable (peek)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Process (readProcess)
 
 #ifdef darwin_HOST_OS
-import Data.Either (either)
 import Data.List (isPrefixOf)
 import Text.Read (readMaybe)
 
@@ -38,12 +41,6 @@ import Data.List (isPrefixOf)
 
 #elif mingw32_HOST_OS
 import Control.Monad (forM)
-import Data.List (intercalate)
-import Foreign.C.Types (CInt(..))
-import Foreign.C.String (CWString, peekCWString)
-import Foreign.Marshal.Alloc (alloca)
-import Foreign.Ptr (Ptr)
-import Foreign.Storable (peek)
 import System.Win32.Registry
   ( hKEY_LOCAL_MACHINE
   , regOpenKey, regCloseKey, regQueryInfoKey, regQueryValue
@@ -60,35 +57,15 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-getOS :: OS
-getOS = OS $
-#ifdef darwin_HOST_OS
-  getMacOSVersion
-#elif linux_HOST_OS
-  getLinuxVersion
-#elif mingw32_HOST_OS
-  getWindowsVersion
-#endif
-
-#ifdef darwin_HOST_OS
-getMacOSVersion :: String
-getMacOSVersion =
-  let res = unsafePerformIO $ readProcess "sw_vers" [] ""
-  in  fromJust $ flip parseLineAfter res "ProductName:"
-#elif linux_HOST_OS
-getLinuxVersion :: String
-getLinuxVersion =
-  let res = unsafePerformIO $ readProcess "lsb_release" ["-d"] ""
-  in  fromJust $ flip parseLineAfter res "Description:"
-#elif mingw32_HOST_OS
-getWindowsVersion :: String
-getWindowsVersion = unsafePerformIO $ alloca $ \hres ->
-  let os_str = c_getOS hres
-  in  peekCWString os_str
+getOS :: String
+getOS = unsafePerformIO $ do
+  let os = c_getOS
+  res <- peekCWString os
+  free os
+  pure res
 
 foreign import ccall safe "getOS"
-  c_getOS :: Ptr CInt -> CWString
-#endif
+  c_getOS :: CWString
 
 parseLineAfter :: String -> String -> Maybe String
 parseLineAfter separator = maybeResult .
