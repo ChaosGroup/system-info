@@ -1,4 +1,4 @@
-0.1.0.14
+0.2.0.0
 	* use wmi queries for getting OS' names on Windows
 	* use system calls for getting OS' names on Unixes
 0.1.0.13
