@@ -12,7 +12,7 @@ Portability : non-portable (GHC extensions)
 module System.Information
   (
   -- * OS
-    OS, getOS
+    OS, os
   -- * CPU
   , CPUName, CPUNames, cpuNames
   , numLogicalCores, LogicalCores(unLogicalCores), CPU, CPUs
@@ -21,13 +21,18 @@ module System.Information
 
 import Control.Applicative
 import Control.Exception (try, SomeException)
-import Data.List (group, sort)
-import System.Process (readProcess)
 import Data.Attoparsec.Text (parse, maybeResult, anyChar, endOfLine, manyTill, space, string)
+import Data.List (group, sort)
+import Data.Maybe (fromJust)
 import Data.Text (Text, pack)
+import Foreign.C.String (CWString, peekCWString)
+import Foreign.Marshal.Alloc (free)
+import Foreign.Ptr (Ptr)
+import Foreign.Storable (peek)
+import System.IO.Unsafe (unsafePerformIO)
+import System.Process (readProcess)
 
 #ifdef darwin_HOST_OS
-import Data.Either (either)
 import Data.List (isPrefixOf)
 import Text.Read (readMaybe)
 
@@ -36,11 +41,11 @@ import Data.List (isPrefixOf)
 
 #elif mingw32_HOST_OS
 import Control.Monad (forM)
-import Data.List (intercalate)
 import System.Win32.Registry
   ( hKEY_LOCAL_MACHINE
   , regOpenKey, regCloseKey, regQueryInfoKey, regQueryValue
-  , subkeys)
+  , subkeys
+  )
 
 #endif
 
@@ -52,29 +57,15 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-getOS :: IO (Maybe OS)
-getOS = do
-  eResult <- try $ readProcess
-#ifdef darwin_HOST_OS
-    "sw_vers" [] ""
-#elif linux_HOST_OS
-    "lsb_release" ["-d"] ""
-#elif mingw32_HOST_OS
-    "systeminfo" [] ""
-#endif
+os :: String
+os = unsafePerformIO $ do
+  let os' = c_getOS
+  res <- peekCWString os'
+  free os'
+  pure res
 
-  case eResult of
-    Left (_ :: SomeException) ->
-      either (const Nothing :: SomeException -> Maybe OS)
-             (Just . OS) <$> try (readProcess "tr" ["-d", "\\n"] =<< readProcess "uname" ["-sr"] "")
-    Right res -> pure $ OS <$> flip parseLineAfter res
-#ifdef darwin_HOST_OS
-      "ProductName:"
-#elif linux_HOST_OS
-      "Description:"
-#elif mingw32_HOST_OS
-      "OS Name:"
-#endif
+foreign import ccall safe "getOS"
+  c_getOS :: CWString
 
 parseLineAfter :: String -> String -> Maybe String
 parseLineAfter separator = maybeResult .
