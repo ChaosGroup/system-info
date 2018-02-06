@@ -23,15 +23,15 @@ HRESULT init() {
   return hres;
 }
 
-HRESULT createInstance(IWbemLocator* plocator) {
+HRESULT createInstance(IWbemLocator** plocator) {
   return CoCreateInstance(
     &CLSID_WbemLocator,
     0,
     CLSCTX_INPROC_SERVER,
-    &IID_IWbemLocator, (LPVOID *)&plocator);
+    &IID_IWbemLocator, (LPVOID*)plocator);
 }
 
-HRESULT connectServer(IWbemLocator* plocator, IWbemServices* pservices) {
+HRESULT connectServer(IWbemLocator* plocator, IWbemServices** pservices) {
   if (!plocator) return E_INVALIDARG;
 
   HRESULT hres = plocator->lpVtbl->ConnectServer(
@@ -43,11 +43,11 @@ HRESULT connectServer(IWbemLocator* plocator, IWbemServices* pservices) {
     0,                              // Security flags.
     NULL,                           // Authority (for example, Kerberos)
     NULL,                           // Context object
-    &pservices);
+    pservices);
 
   if (!FAILED(hres)) {
     hres = CoSetProxyBlanket(
-      (IUnknown *)pservices,
+      (IUnknown*)*pservices,
       RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
       RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
       NULL,                        // Server principal name
@@ -57,15 +57,15 @@ HRESULT connectServer(IWbemLocator* plocator, IWbemServices* pservices) {
       EOAC_NONE);                  // proxy capabilities
 
     if (FAILED(hres)) {
-      pservices->lpVtbl->Release(pservices);
-      pservices = NULL;
+      *pservices->lpVtbl->Release(pservices);
+      *pservices = NULL;
     }
   }
 
   return hres;
 }
 
-HRESULT query(IWbemServices* pservices, BSTR query, IEnumWbemClassObject* penumerator) {
+HRESULT query(IWbemServices* pservices, BSTR query, IEnumWbemClassObject** penumerator) {
   if (!pservices) return E_INVALIDARG;
 
   return pservices->lpVtbl->ExecQuery(
@@ -74,13 +74,13 @@ HRESULT query(IWbemServices* pservices, BSTR query, IEnumWbemClassObject* penume
     query,
     WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
     NULL,
-    &penumerator);
+    penumerator);
 }
 
 HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* value) {
   if (!penumerator) return E_INVALIDARG;
 
-  IWbemClassObject *pclassObject = NULL;
+  IWbemClassObject* pclassObject = NULL;
   ULONG ures = 0;
   HRESULT hres = penumerator->lpVtbl->Next(penumerator, WBEM_INFINITE, 1, &pclassObject, &ures);
 
@@ -99,48 +99,26 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* v
 }
 
 wchar_t* getOS() {
-  HRESULT hres = init();
-  if (FAILED(hres)) {
-    CoUninitialize();
-    return NULL;
-  }
-
   IWbemLocator* plocator = NULL;
-  hres = createInstance(plocator);
-  if (FAILED(hres)) {
-    CoUninitialize();
-    return NULL;
-  }
-
   IWbemServices* pservices = NULL;
-  hres = connectServer(plocator, pservices);
-  if (FAILED(hres)) {
-    pservices->lpVtbl->Release(pservices);
-    plocator->lpVtbl->Release(plocator);
-    CoUninitialize();
-    return NULL;
-  }
-
   IEnumWbemClassObject* penumerator = NULL;
-  hres = query(pservices, SysAllocString(L"SELECT * FROM Win32_OperatingSystem"), penumerator);
-  if (FAILED(hres)) {
-    penumerator->lpVtbl->Release(penumerator);
-    pservices->lpVtbl->Release(pservices);
-    plocator->lpVtbl->Release(plocator);
-    CoUninitialize();
-    return NULL;
-  }
-
   wchar_t* os = malloc(sizeof(os) * OS_VERSION_MAX_SIZE);
-  hres = getStringField(penumerator, SysAllocString(L"Caption"), os);
-  if (FAILED(hres)) {
-    free(res);
-    res = NULL;
-  }
 
-  penumerator->lpVtbl->Release(penumerator);
-  pservices->lpVtbl->Release(pservices);
-  plocator->lpVtbl->Release(plocator);
+  do {
+    if (FAILED(init())) break;
+    if (FAILED(createInstance(&plocator))) break;
+    if (FAILED(connectServer(plocator, &pservices))) break;
+    if (FAILED(query(pservices, SysAllocString(L"SELECT * FROM Win32_OperatingSystem"), &penumerator))) break;
+    if (FAILED(getStringField(penumerator, SysAllocString(L"Caption"), os))) {
+      free(os);
+      os = NULL;
+      break;
+    }
+  } while (0);
+
+  if (penumerator) penumerator->lpVtbl->Release(penumerator);
+  if (pservices) pservices->lpVtbl->Release(pservices);
+  if (plocator) plocator->lpVtbl->Release(plocator);
   CoUninitialize();
 
   return os;
