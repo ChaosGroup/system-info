@@ -21,7 +21,7 @@ wchar_t* getOS() {
     format = L"Mac OS X 10.%d";
   }
 
-  if (swprintf(os, OS_VERSION_MAX_SIZE - 1, format, atoi(system_info.release) - 4) == -1) {
+  if (swprintf(os, OS_VERSION_MAX_SIZE - 1, format, version - 4) == -1) {
 #else
   if (swprintf(os, OS_VERSION_MAX_SIZE - 1, L"%s %s", system_info.sysname, system_info.release) == -1) {
 #endif
