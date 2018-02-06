@@ -2,8 +2,6 @@
 #include <Wbemidl.h>
 #include <stdbool.h>
 
-#define OS_VERSION_MAX_SIZE 128
-
 
 HRESULT init() {
   HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -24,6 +22,7 @@ HRESULT init() {
 }
 
 HRESULT createInstance(IWbemLocator** plocator) {
+  if (!plocator) return E_INVALIDARG;
   return CoCreateInstance(
     &CLSID_WbemLocator,
     0,
@@ -32,7 +31,7 @@ HRESULT createInstance(IWbemLocator** plocator) {
 }
 
 HRESULT connectServer(IWbemLocator* plocator, IWbemServices** pservices) {
-  if (!plocator) return E_INVALIDARG;
+  if (!plocator || !pservices) return E_INVALIDARG;
 
   HRESULT hres = plocator->lpVtbl->ConnectServer(
     plocator,
@@ -66,7 +65,7 @@ HRESULT connectServer(IWbemLocator* plocator, IWbemServices** pservices) {
 }
 
 HRESULT query(IWbemServices* pservices, BSTR query, IEnumWbemClassObject** penumerator) {
-  if (!pservices) return E_INVALIDARG;
+  if (!pservices || !penumerator) return E_INVALIDARG;
 
   return pservices->lpVtbl->ExecQuery(
     pservices,
@@ -77,8 +76,8 @@ HRESULT query(IWbemServices* pservices, BSTR query, IEnumWbemClassObject** penum
     penumerator);
 }
 
-HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* value) {
-  if (!penumerator) return E_INVALIDARG;
+HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t** value) {
+  if (!penumerator || !value) return E_INVALIDARG;
 
   IWbemClassObject* pclassObject = NULL;
   ULONG ures = 0;
@@ -89,7 +88,9 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* v
     hres = pclassObject->lpVtbl->Get(pclassObject, field, 0, &vProperty, 0, 0);
 
     if (!FAILED(hres)) {
-      wcsncpy(value, vProperty.bstrVal, OS_VERSION_MAX_SIZE);
+      int n = SysStringLen(vProperty.bstrVal) + 1;
+      *value = malloc(sizeof(value) * n);
+      wcsncpy(value, vProperty.bstrVal, n);
       VariantClear(&vProperty);
     }
     pclassObject->lpVtbl->Release(pclassObject);
@@ -102,18 +103,14 @@ wchar_t* getOS() {
   IWbemLocator* plocator = NULL;
   IWbemServices* pservices = NULL;
   IEnumWbemClassObject* penumerator = NULL;
-  wchar_t* os = malloc(sizeof(os) * OS_VERSION_MAX_SIZE);
+  wchar_t* os = NULL;
 
   do {
     if (FAILED(init())) break;
     if (FAILED(createInstance(&plocator))) break;
     if (FAILED(connectServer(plocator, &pservices))) break;
     if (FAILED(query(pservices, SysAllocString(L"SELECT * FROM Win32_OperatingSystem"), &penumerator))) break;
-    if (FAILED(getStringField(penumerator, SysAllocString(L"Caption"), os))) {
-      free(os);
-      os = NULL;
-      break;
-    }
+    if (FAILED(getStringField(penumerator, SysAllocString(L"Caption"), &os))) break;
   } while (0);
 
   if (penumerator) penumerator->lpVtbl->Release(penumerator);
