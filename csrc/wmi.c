@@ -89,7 +89,7 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t* v
     hres = pclassObject->lpVtbl->Get(pclassObject, field, 0, &vProperty, 0, 0);
 
     if (!FAILED(hres)) {
-      wcsncpy(value, vProperty.bstrVal, OS_VERSION_MAX_SIZE - 1);
+      wcsncpy(value, vProperty.bstrVal, OS_VERSION_MAX_SIZE);
       VariantClear(&vProperty);
     }
     pclassObject->lpVtbl->Release(pclassObject);
