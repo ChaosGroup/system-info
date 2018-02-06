@@ -57,8 +57,8 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-os :: String
-os = unsafePerformIO $ do
+os :: OS
+os = OS . unsafePerformIO $ do
   let os' = c_getOS
   res <- peekCWString os'
   free os'
