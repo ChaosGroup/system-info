@@ -56,7 +56,7 @@ HRESULT connectServer(IWbemLocator* plocator, IWbemServices** pservices) {
       EOAC_NONE);                  // proxy capabilities
 
     if (FAILED(hres)) {
-      *pservices->lpVtbl->Release(pservices);
+      (*pservices)->lpVtbl->Release(pservices);
       *pservices = NULL;
     }
   }
@@ -90,7 +90,7 @@ HRESULT getStringField(IEnumWbemClassObject* penumerator, BSTR field, wchar_t** 
     if (!FAILED(hres)) {
       int n = SysStringLen(vProperty.bstrVal) + 1;
       *value = malloc(sizeof(value) * n);
-      wcsncpy(value, vProperty.bstrVal, n);
+      wcsncpy(*value, vProperty.bstrVal, n);
       VariantClear(&vProperty);
     }
     pclassObject->lpVtbl->Release(pclassObject);

@@ -12,7 +12,7 @@ Portability : non-portable (GHC extensions)
 module System.Information
   (
   -- * OS
-    OS, getOS
+    OS, os
   -- * CPU
   , CPUName, CPUNames, cpuNames
   , numLogicalCores, LogicalCores(unLogicalCores), CPU, CPUs
@@ -57,11 +57,11 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-getOS :: String
-getOS = unsafePerformIO $ do
-  let os = c_getOS
-  res <- peekCWString os
-  free os
+os :: String
+os = unsafePerformIO $ do
+  let os' = c_getOS
+  res <- peekCWString os'
+  free os'
   pure res
 
 foreign import ccall safe "getOS"
