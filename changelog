@@ -1,3 +1,5 @@
+0.4.0.0
+	* make os returning an IO OS, since it caused problems on Windows
 0.3.0.0
 	* make os returning an OS instead of a String
 0.2.0.0
