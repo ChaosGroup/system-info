@@ -24,12 +24,11 @@ import Control.Exception (try, SomeException)
 import Data.Attoparsec.Text (parse, maybeResult, anyChar, endOfLine, manyTill, space, string)
 import Data.List (group, sort)
 import Data.Maybe (fromJust)
-import Data.Text (Text, pack)
+import Data.Text (pack)
 import Foreign.C.String (CWString, peekCWString)
 import Foreign.Marshal.Alloc (free)
 import Foreign.Ptr (Ptr)
 import Foreign.Storable (peek)
-import System.IO.Unsafe (unsafePerformIO)
 import System.Process (readProcess)
 
 #ifdef darwin_HOST_OS
@@ -57,8 +56,8 @@ instance Show OS where
   show (OS os) = os
 
 -- | Get the current OS' name
-os :: OS
-os = OS . unsafePerformIO $ do
+os :: IO OS
+os = OS <$> do
   let os' = c_getOS
   res <- peekCWString os'
   free os'
