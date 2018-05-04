@@ -58,13 +58,13 @@ instance Show OS where
 -- | Get the current OS' name
 os :: IO OS
 os = OS <$> do
-  let os' = c_getOS
+  os' <- c_getOS
   res <- peekCWString os'
   free os'
   pure res
 
 foreign import ccall safe "getOS"
-  c_getOS :: CWString
+  c_getOS :: IO CWString
 
 parseLineAfter :: String -> String -> Maybe String
 parseLineAfter separator = maybeResult .
