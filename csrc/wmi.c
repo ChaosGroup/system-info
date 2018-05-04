@@ -4,7 +4,7 @@
 
 
 HRESULT init() {
-  HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+  HRESULT hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
 
   if (!FAILED(hres)) {
     hres = CoInitializeSecurity(
