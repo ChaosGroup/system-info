@@ -134,7 +134,7 @@ windowsCPUNames = do
   n <- subkeys <$> regQueryInfoKey cpus
   res <- forM [0..n-1] $ \i -> do
     cpu <- regOpenKey cpus $ show i
-    cpuName <- regQueryValue cpu $ Just "ProcessorNameString"
+    cpuName <- regQueryValue cpu "ProcessorNameString"
     regCloseKey cpu
     pure cpuName
 
