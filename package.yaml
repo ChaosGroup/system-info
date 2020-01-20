@@ -13,7 +13,7 @@ description:         An OS independent Haskell library for getting information a
 
 extra-source-files:
 - README.md
-- changelog
+- CHANGELOG.md
 
 dependencies:
 - base >= 4.7 && < 5
