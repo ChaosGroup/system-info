@@ -1,0 +1,40 @@
+name:                system-info
+version:             0.4.0.1
+github:              "ChaosGroup/system-info"
+license:             MIT
+author:              "Daniel Taskoff"
+maintainer:          "daniel.taskoff@gmail.com"
+copyright:           "2020 (c) ChaosGroup"
+
+synopsis:            Get information about CPUs, memory, etc.
+category:            System
+
+description:         An OS independent Haskell library for getting information about CPUs, memory, etc.
+
+extra-source-files:
+- README.md
+- changelog
+
+dependencies:
+- base >= 4.7 && < 5
+- attoparsec
+- text
+- process
+
+library:
+  source-dirs: src
+
+  when:
+  - condition: os(windows)
+    then:
+      dependencies:
+      - Win32
+      extra-libraries: ole32, oleaut32, wbemuuid
+      c-sources: csrc/wmi.c
+    else:
+      c-sources: csrc/uname.c
+
+ghc-options:
+- -Wall
+- -fwarn-incomplete-uni-patterns
+- -fwarn-incomplete-record-updates
