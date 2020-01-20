@@ -1,3 +1,4 @@
+{-# Language BlockArguments #-}
 {-# Language DerivingStrategies #-}
 {-# Language GeneralisedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
@@ -20,6 +21,7 @@ module System.OS
 
 import Foreign.C.String (CWString, peekCWString)
 import Foreign.Marshal.Alloc (free)
+import System.IO.Unsafe (unsafePerformIO)
 
 
 -- | The name of the current operating system.
@@ -27,12 +29,14 @@ newtype OS = OS String
   deriving newtype Show
 
 -- | Get the name of the current operating system.
-os :: IO OS
-os = OS <$> do
+os :: OS
+os = unsafePerformIO do
+  -- unsafePerformIO and NOINLINE guarantee that c_getOS won't be called more than once
   os' <- c_getOS
   res <- peekCWString os'
   free os'
-  pure res
+  pure $ OS res
+{-# NOINLINE os #-}
 
 foreign import ccall safe "getOS"
   c_getOS :: IO CWString
