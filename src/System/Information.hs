@@ -1,18 +1,20 @@
 {-# Language DerivingStrategies #-}
 {-# Language GeneralisedNewtypeDeriving #-}
-{-|
-Module      : System.Information
-Description : Getting system information
-Copyright   : 2016 ChaosGroup
-License     : MIT
-Maintainer  : daniel.taskoff@chaosgroup.com
-Stability   : experimental
-Portability : non-portable (GHC extensions)
--}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  System.Information
+-- Copyright   :  (c) ChaosGroup, 2020
+-- License     :  MIT
+--
+-- Maintainer  :  daniel.taskoff@gmail.com
+-- Stability   :  experimental
+--
+-- Get the name of the current operating system.
+-----------------------------------------------------------------------------
 
 module System.Information
   (
-  -- * OS
+  -- * 'OS'
     OS, os
   ) where
 
@@ -20,11 +22,11 @@ import Foreign.C.String (CWString, peekCWString)
 import Foreign.Marshal.Alloc (free)
 
 
--- | A datatype representing different operating systems.
+-- | The name of the current operating system.
 newtype OS = OS String
   deriving newtype Show
 
--- | Get the current OS' name
+-- | Get the name of the current operating system.
 os :: IO OS
 os = OS <$> do
   os' <- c_getOS
