@@ -1,3 +1,5 @@
+{-# Language DerivingStrategies #-}
+{-# Language GeneralisedNewtypeDeriving #-}
 {-|
 Module      : System.Information
 Description : Getting system information
@@ -18,11 +20,9 @@ import Foreign.C.String (CWString, peekCWString)
 import Foreign.Marshal.Alloc (free)
 
 
--- | A datatype representing different OSes
+-- | A datatype representing different operating systems.
 newtype OS = OS String
-
-instance Show OS where
-  show (OS os) = os
+  deriving newtype Show
 
 -- | Get the current OS' name
 os :: IO OS
