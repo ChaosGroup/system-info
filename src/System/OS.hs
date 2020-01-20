@@ -21,6 +21,7 @@ module System.OS
 
 import Foreign.C.String (CWString, peekCWString)
 import Foreign.Marshal.Alloc (free)
+import Foreign.Ptr (nullPtr)
 import System.IO.Unsafe (unsafePerformIO)
 
 
@@ -28,14 +29,17 @@ import System.IO.Unsafe (unsafePerformIO)
 newtype OS = OS String
   deriving newtype Show
 
--- | Get the name of the current operating system.
-os :: OS
+-- | Try to get the name of the current operating system.
+os :: Maybe OS
 os = unsafePerformIO do
   -- unsafePerformIO and NOINLINE guarantee that c_getOS won't be called more than once
-  os' <- c_getOS
-  res <- peekCWString os'
-  free os'
-  pure $ OS res
+  osptr <- c_getOS
+  if osptr == nullPtr
+  then pure Nothing
+  else do
+    res <- peekCWString osptr
+    free osptr
+    pure $ Just $ OS res
 {-# NOINLINE os #-}
 
 foreign import ccall safe "getOS"
