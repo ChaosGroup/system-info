@@ -2,7 +2,7 @@
 {-# Language GeneralisedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  System.Information
+-- Module      :  System.OS
 -- Copyright   :  (c) ChaosGroup, 2020
 -- License     :  MIT
 --
@@ -12,7 +12,7 @@
 -- Get the name of the current operating system.
 -----------------------------------------------------------------------------
 
-module System.Information
+module System.OS
   (
   -- * 'OS'
     OS, os
