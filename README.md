@@ -1,6 +1,4 @@
-## system-info
-An OS independent Haskell library for getting information about CPUs, memory, etc.
+A small library for getting the name of the OS.
 
-#### Setup
-* install [stack](http://docs.haskellstack.org/en/stable/install_and_upgrade/)
-* run `> stack build` from project's root (or `> stack setup && stack build` if using stack v1.5.1 or older)
+__NOTE__: the library used to give information about CPUs, as well. However, it wasn't reliable enough.
+If you need such functionality, I'd recommend trying [hlibcpuid](https://github.com/dtaskoff/hlibcpuid).

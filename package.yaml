@@ -6,10 +6,10 @@ author:              "Daniel Taskoff"
 maintainer:          "daniel.taskoff@gmail.com"
 copyright:           "2020 (c) ChaosGroup"
 
-synopsis:            Get information about CPUs, memory, etc.
+synopsis:            Get the name of the operating system
 category:            System
 
-description:         An OS independent Haskell library for getting information about CPUs, memory, etc.
+description:         Please see the README on Github at <https://github.com/ChaosGroup/system-info#readme>
 
 extra-source-files:
 - README.md
@@ -17,9 +17,6 @@ extra-source-files:
 
 dependencies:
 - base >= 4.7 && < 5
-- attoparsec
-- text
-- process
 
 library:
   source-dirs: src
