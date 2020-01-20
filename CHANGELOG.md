@@ -1,3 +1,6 @@
+0.5.0.0
+  * drop the functionality for getting the name and number of available CPUs
+  * fix the problems with getting the name of the operating system multiple times
 0.4.0.1
 	* fix the threading problems with getting the OS's name (on Windows)
 0.4.0.0
