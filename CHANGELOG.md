@@ -1,3 +1,5 @@
+## 0.5.1
+  * replace the Show OS instance with the newtype's field unOS
 ## 0.5.0.0
   * drop the functionality for getting the name and number of available CPUs
   * fix the problem with getting the name of the operating system multiple times
