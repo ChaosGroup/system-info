@@ -1,6 +1,4 @@
 {-# Language BlockArguments #-}
-{-# Language DerivingStrategies #-}
-{-# Language GeneralisedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  System.OS
@@ -16,7 +14,7 @@
 module System.OS
   (
   -- * 'OS'
-    OS, os
+    OS(..), os
   ) where
 
 import Foreign.C.String (CWString, peekCWString)
@@ -26,8 +24,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 
 -- | The name of the current operating system.
-newtype OS = OS String
-  deriving newtype Show
+newtype OS = OS { unOS :: String }
 
 -- | Try to get the name of the current operating system.
 os :: Maybe OS
