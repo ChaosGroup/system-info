@@ -1,10 +1,10 @@
 name:                system-info
-version:             0.5.1
+version:             0.5.2
 github:              "ChaosGroup/system-info"
 license:             MIT
 author:              "Daniel Taskoff"
 maintainer:          "daniel.taskoff@gmail.com"
-copyright:           "2020 (c) ChaosGroup"
+copyright:           "Copyright 2021 Chaos Software OOD"
 
 synopsis:            Get the name of the operating system
 category:            System
